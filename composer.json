@@ -1,0 +1,28 @@
+{
+    "name": "zyb/php-socket-io",
+    "description": "Based on phpsocket.io packaging",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Zyb\\PhpSocketIo\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "zyb",
+            "email": "867512099@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "workerman/phpsocket.io": "^1.1",
+        "ext-json": "*",
+        "ext-curl": "*"
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://mirrors.aliyun.com/composer"
+        }
+    }
+}
