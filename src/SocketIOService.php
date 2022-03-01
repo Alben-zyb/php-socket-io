@@ -185,26 +185,17 @@ class SocketIOService
                     return;
                 }
                 foreach ($events ?: [] as $event) {
-                    if (isset($this->eventsMap[$event]['users'][$socket->uid]) && --$this->eventsMap[$event]['users'][$socket->uid] <= 0) {
-                        unset($this->eventsMap[$event]['users'][$socket->uid]);
-                        if (count($this->eventsMap[$event]['users']) === 0) {
-                            unset($this->eventsMap[$event]);
-                        }
-                    }
+                    $this->unbind($this->eventsMap, $event, $socket->uid);
                 }
             });
+
             // 当客户端断开连接时触发（一般是关闭网页或者跳转刷新导致）
             $socket->on('disconnect', function () use ($socket) {
                 if (!isset($socket->uid)) {
                     return;
                 }
                 foreach ($socket->userEvents as $event) {
-                    if (isset($this->eventsMap[$event]['users'][$socket->uid]) && --$this->eventsMap[$event]['users'][$socket->uid] <= 0) {
-                        unset($this->eventsMap[$event]['users'][$socket->uid]);
-                        if (count($this->eventsMap[$event]['users']) === 0) {
-                            unset($this->eventsMap[$event]);
-                        }
-                    }
+                    $this->unbind($this->eventsMap, $event, $socket->uid);
                 }
             });
         });
@@ -257,6 +248,24 @@ class SocketIOService
             };
             $innerHttpWorker->listen();
         });
+    }
+
+    /**
+     * 解绑事件
+     * @param $eventsMap
+     * @param $event
+     * @param $uid
+     * author ZhengYiBin
+     * date   2022-03-01 09:50
+     */
+    public function unbind(&$eventsMap, $event, $uid): void
+    {
+        if (isset($eventsMap[$event]['users'][$uid]) && --$eventsMap[$event]['users'][$uid] <= 0) {
+            unset($eventsMap[$event]['users'][$uid]);
+            if (count($eventsMap[$event]['users']) === 0) {
+                unset($eventsMap[$event]);
+            }
+        }
     }
 
     /**
