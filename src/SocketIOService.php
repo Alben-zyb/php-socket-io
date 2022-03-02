@@ -81,7 +81,13 @@ class SocketIOService
     {
         // 创建PHPSocketIO服务
         $this->serviceIO = new SocketIO($this->config['port']);
-
+        if (isset($this->config['white_list']) && is_array($this->config['white_list'])) {
+            $list = '';
+            foreach ($this->config['white_list'] ?? [] as $whiteList) {
+                $list .= $whiteList . ' ';
+            }
+            $this->serviceIO->origins($list);
+        }
         //监听客户端连接事件
         $this->serviceIO->on('connection', function ($socket) {
             //监听自定义事件
