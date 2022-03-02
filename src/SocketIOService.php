@@ -27,6 +27,10 @@ class SocketIOService
      '$config' => [
         //是否启动
         'enable' => true,
+        //白名单(选填)
+        'white_list' => [
+            'http://localhost',
+        ],
         //socket.io端口
         'port' => env('SOCKET_PORT', 2120),
         //socket.io内部监听地址
@@ -81,11 +85,13 @@ class SocketIOService
     {
         // 创建PHPSocketIO服务
         $this->serviceIO = new SocketIO($this->config['port']);
+        //白名单过滤
         if (isset($this->config['white_list']) && is_array($this->config['white_list'])) {
             $list = '';
             foreach ($this->config['white_list'] ?? [] as $whiteList) {
                 $list .= $whiteList . ' ';
             }
+            //添加白名单
             $this->serviceIO->origins($list);
         }
         //监听客户端连接事件
@@ -106,6 +112,7 @@ class SocketIOService
                 }
                 //用户自定义事件
                 $userEvents = [];
+                //在线事件绑定
                 foreach ($events ?: [] as $event) {
                     //事件数据格式：非空字符串
                     if (empty($event) || !is_string($event)) {
@@ -117,6 +124,7 @@ class SocketIOService
                             'users' => [],
                         ];
                     }
+                    //用户唯一标识（分组、用户组）
                     if (!empty($uid)) {
                         if (!isset($this->eventsMap[$event]['users'][$uid])) {
                             $this->eventsMap[$event]['users'][$uid] = 0;
@@ -125,7 +133,10 @@ class SocketIOService
                     }
                     $userEvents[] = $event;
                 }
+                //保存用户自定事件
                 $socket->userEvents = $userEvents;
+
+                //socket加入用户组
                 if (!empty($uid)) {
                     $socket->uid = $uid;
                     $socket->join($uid);    //多tab标签
@@ -170,6 +181,7 @@ class SocketIOService
                     }
                     $userEvents[] = $event;
                 }
+                //保存用户自定义绑定事件
                 $socket->userEvents = array_merge($socket->userEvents, $userEvents);
                 if (!empty($socket->uid)) {
                     $socket->uid = $socket->uid;
