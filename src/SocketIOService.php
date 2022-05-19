@@ -87,12 +87,15 @@ class SocketIOService
         $this->serviceIO = new SocketIO($this->config['port']);
         //白名单过滤
         if (isset($this->config['white_list']) && is_array($this->config['white_list'])) {
-            $list = '';
-            foreach ($this->config['white_list'] ?? [] as $whiteList) {
-                $list .= $whiteList . ' ';
+            $whiteLists = array_filter($this->config['white_list']);
+            if (!empty($whiteLists)) {
+                $list = '';
+                foreach ($whiteLists ?? [] as $whiteList) {
+                    $list .= $whiteList . ' ';
+                }
+                //添加白名单
+                $this->serviceIO->origins($list);
             }
-            //添加白名单
-            $this->serviceIO->origins($list);
         }
         //监听客户端连接事件
         $this->serviceIO->on('connection', function ($socket) {
@@ -103,12 +106,22 @@ class SocketIOService
                     $socket->disconnect();
                     return;
                 }
-                //$uid:非空字符串，$events:非空字符串数组
-                $uid = $uidEvents[0] ?? '';
-                $events = $uidEvents[1] ?? [];
-                //格式验证
-                if (!is_array($events)) {
-                    $events = [$events];
+                //已登录，返回
+                if (!empty($socket->uid)) {
+                    $socket->emit('login', ['success' => false, 'message' => '已登录']);
+                    return;
+                }
+
+                $uid = $uidEvents;
+                $events = [];
+                if (is_array($uidEvents)) {
+                    //$uid:非空字符串，$events:非空字符串数组
+                    $uid = $uidEvents[0] ?? '';
+                    $events = $uidEvents[1] ?? [];
+                    //格式验证
+                    if (!is_array($events)) {
+                        $events = [$events];
+                    }
                 }
                 //用户自定义事件
                 $userEvents = [];
@@ -238,6 +251,7 @@ class SocketIOService
                         //客户端监听的事件
                         $event = $params['event'] ?? 'new_msg';
                         $to = $params['to'] ?? null;
+                        $success = (bool)($params['success'] ?? true);
                         $message = $params['message'] ?? '';
                         $data = json_decode($params['data'] ?? '', true);
                         //类型控制，$data须为数组
@@ -248,9 +262,9 @@ class SocketIOService
                         if (isset($this->eventsMap[$event])) {
                             //是否广播
                             if ($this->eventsMap[$event]['broadcast']) {
-                                $this->serviceIO->emit($event, $this->resultToSocketIO(true, $message, $data));
+                                $this->serviceIO->emit($event, $this->resultToSocketIO($success, $message, $data));
                             } else if ($to && isset($this->eventsMap[$event]['users'][$to])) {
-                                $this->serviceIO->to($to)->emit($event, $this->resultToSocketIO(true, $message, $data));
+                                $this->serviceIO->to($to)->emit($event, $this->resultToSocketIO($success, $message, $data));
                             } else {
                                 // http接口返回，如果用户离线socket返回fail
                                 return $connection->send($this->resultToHttp(false, 'offline'));
