@@ -14,7 +14,7 @@
     // 初始化io对象
     var socket = io('http://tms.dasu123.my');
     // uid 可以为网站用户的uid，作为例子这里用session_id代替
-    var uid = '1';
+    var uid = '2';
     // 当socket连接后发送登录请求
     socket.on('connect', function () {
         socket.emit('login', uid);
@@ -25,8 +25,12 @@
         alert('new_msg:' + msg.message);
     });
     socket.on('todoEvent', function (msg) {
+        console.log(msg);
         alert('todoEvent:' + msg.message);
+
     });
-    socket.on('event2', function(msg){alert('event2:'+msg.message);});
+    socket.on('event2', function (msg) {
+        alert('event2:' + msg.message);
+    });
 </script>
 </html>

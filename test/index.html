@@ -12,7 +12,7 @@
 <!--<script src='socket.io.js'></script>-->
 <script>
     // 初始化io对象
-    var socket = io('https://tms.dasu123.com');
+    var socket = io('http://127.0.0.1:2120');
     // uid 可以为网站用户的uid，作为例子这里用session_id代替
     var uid = '1';
     // 当socket连接后发送登录请求
@@ -25,8 +25,12 @@
         alert('new_msg:' + msg.message);
     });
     socket.on('todoEvent', function (msg) {
-        alert('todoEvent:' + msg.message);
+        console.log('msg:');
+        console.log(msg);
+        // alert('todoEvent:' + msg.message);
     });
-    socket.on('event2', function(msg){alert('event2:'+msg.message);});
+    socket.on('event2', function (msg) {
+        alert('event2:' + msg.message);
+    });
 </script>
 </html>
