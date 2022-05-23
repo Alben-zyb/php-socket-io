@@ -151,8 +151,8 @@ class SocketIOService
 
                 //socket加入用户组
                 if (!empty($uid)) {
-                    $socket->uid = $uid;
-                    $socket->join($uid);    //多tab标签
+                    $socket->uid = $uid;    //主要根据$socket->uid进行消息定点推送（即$this->serviceIO->to($to)中的to可以是uid，也可以是join的用户组）
+                    $socket->join($uid);    //暂时不用
                 }
                 //初始化推送事件消息
                 foreach ($events ?: [] as $event) {
