@@ -137,8 +137,6 @@ class SocketIOService
                         $events = [$events];
                     }
                 }
-                //用户自定义事件
-                $userEvents = [];
                 //在线事件绑定
                 foreach ($events ?: [] as $event) {
                     //事件数据格式：非空字符串
@@ -158,11 +156,7 @@ class SocketIOService
                         }
                         ++$this->eventsMap[$event]['users'][$uid];
                     }
-                    $userEvents[] = $event;
                 }
-                //保存用户自定事件
-                $socket->userEvents = $userEvents;
-
                 //socket加入用户组
                 if (!empty($uid)) {
                     $socket->uid = $uid;
@@ -180,8 +174,6 @@ class SocketIOService
                 if (!is_array($events)) {
                     $events = [$events];
                 }
-                //用户自定义事件
-                $userEvents = [];
                 foreach ($events ?: [] as $event) {
                     //事件数据格式：非空字符串
                     if (empty($event) || !is_string($event)) {
@@ -199,10 +191,7 @@ class SocketIOService
                         }
                         ++$this->eventsMap[$event]['users'][$socket->uid];
                     }
-                    $userEvents[] = $event;
                 }
-                //保存用户自定义绑定事件
-                $socket->userEvents = array_merge($socket->userEvents, $userEvents);
                 if (!empty($socket->uid)) {
                     $socket->uid = $socket->uid;
                     $socket->join($socket->uid);    //主要根据$socket->join($uid)进行消息定点推送
@@ -228,9 +217,7 @@ class SocketIOService
                 if (!isset($socket->uid)) {
                     return;
                 }
-                foreach ($socket->userEvents as $event) {
-                    $this->unbind($this->eventsMap, $event, $socket->uid);
-                }
+                $this->disconnect($this->eventsMap, $socket->uid);
             });
         });
 
@@ -286,6 +273,22 @@ class SocketIOService
     }
 
     /**
+     * 断开事件
+     * @param $eventsMap
+     * @param $uid
+     * author ZhengYiBin
+     * date   2022-03-01 09:50
+     */
+    public function disconnect(&$eventsMap, $uid): void
+    {
+        foreach ($eventsMap as $eventName => $event) {
+            if (isset($event['users'][$uid])) {
+                $this->unbind($eventsMap, $eventName, $uid);
+            }
+        }
+    }
+
+    /**
      * 解绑事件
      * @param $eventsMap
      * @param $event
@@ -312,7 +315,7 @@ class SocketIOService
     {
         //初始化推送事件消息
         foreach ($events ?: [] as $event) {
-            if (!empty($event)) {
+            if (!empty($event) && isset($this->config['callback_url'])) {
                 $this->asyncPost($this->config['callback_url'], ['event' => $event, 'uid' => $socket->uid], function ($response) use ($socket, $event) {
                     $data = str_replace([], [], $response->getBody());
                     if (is_string($data)) {
@@ -320,6 +323,8 @@ class SocketIOService
                     }
                     $socket->emit($event, $this->resultToSocketIO(true, 'bind success', $data));
                 });
+            } else {
+                $socket->emit($event, $this->resultToSocketIO(true, 'bind success', []));
             }
         }
     }
