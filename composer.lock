@@ -4,8 +4,67 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8b3306fd9ba0891422bd952f94220726",
+    "content-hash": "1c3bbdfcdd9bcd30704b2ce06df28eb6",
     "packages": [
+        {
+            "name": "psr/http-message",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-message.git",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
+            "keywords": [
+                "http",
+                "http-message",
+                "psr",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/http-message/tree/master"
+            },
+            "time": "2016-08-06T14:39:51+00:00"
+        },
         {
             "name": "workerman/channel",
             "version": "v1.1.0",
@@ -45,6 +104,47 @@
                 "source": "https://github.com/walkor/channel/tree/v1.1.0"
             },
             "time": "2021-02-08T02:45:42+00:00"
+        },
+        {
+            "name": "workerman/http-client",
+            "version": "v0.1.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/walkor/http-client.git",
+                "reference": "f4a4365c44a2837035f290c593b26343a6058ba1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/walkor/http-client/zipball/f4a4365c44a2837035f290c593b26343a6058ba1",
+                "reference": "f4a4365c44a2837035f290c593b26343a6058ba1",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "workerman/psr7": ">=1.4.3",
+                "workerman/workerman": ">=3.5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Workerman\\Http\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "homepage": "http://www.workerman.net",
+            "support": {
+                "issues": "https://github.com/walkor/http-client/issues",
+                "source": "https://github.com/walkor/http-client/tree/v0.1.7"
+            },
+            "time": "2020-11-24T01:44:51+00:00"
         },
         {
             "name": "workerman/phpsocket.io",
@@ -101,17 +201,17 @@
             "time": "2022-02-24T03:33:45+00:00"
         },
         {
-            "name": "workerman/workerman",
-            "version": "v4.0.30",
+            "name": "workerman/psr7",
+            "version": "v1.4.4",
             "source": {
                 "type": "git",
-                "url": "https://github.com/walkor/workerman.git",
-                "reference": "510c220369ed3a8f982539db284a0a64e7224d8a"
+                "url": "https://github.com/walkor/psr7.git",
+                "reference": "8f163224ed5bb93fb210da9211651fcd88acb97b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/walkor/workerman/zipball/510c220369ed3a8f982539db284a0a64e7224d8a",
-                "reference": "510c220369ed3a8f982539db284a0a64e7224d8a",
+                "url": "https://api.github.com/repos/walkor/psr7/zipball/8f163224ed5bb93fb210da9211651fcd88acb97b",
+                "reference": "8f163224ed5bb93fb210da9211651fcd88acb97b",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -121,7 +221,81 @@
                 ]
             },
             "require": {
-                "php": ">=5.3"
+                "php": ">=5.4.0",
+                "psr/http-message": "~1.0"
+            },
+            "provide": {
+                "psr/http-message-implementation": "1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.5-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/functions_include.php"
+                ],
+                "psr-4": {
+                    "Workerman\\Psr7\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https://github.com/mtdowling"
+                },
+                {
+                    "name": "Tobias Schultze",
+                    "homepage": "https://github.com/Tobion"
+                }
+            ],
+            "description": "PSR-7 message implementation that also provides common utility methods",
+            "keywords": [
+                "http",
+                "message",
+                "request",
+                "response",
+                "stream",
+                "uri",
+                "url"
+            ],
+            "support": {
+                "source": "https://github.com/walkor/psr7/tree/v1.4.4"
+            },
+            "time": "2020-08-31T09:54:31+00:00"
+        },
+        {
+            "name": "workerman/workerman",
+            "version": "v4.0.37",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/walkor/workerman.git",
+                "reference": "17937eb74526adc583a0217ba842e91d6d792576"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/walkor/workerman/zipball/17937eb74526adc583a0217ba842e91d6d792576",
+                "reference": "17937eb74526adc583a0217ba842e91d6d792576",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.4"
             },
             "suggest": {
                 "ext-event": "For better performance. "
@@ -167,7 +341,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2022-02-28T10:08:18+00:00"
+            "time": "2022-05-15T14:22:57+00:00"
         }
     ],
     "packages-dev": [],

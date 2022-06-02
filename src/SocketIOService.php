@@ -14,10 +14,22 @@ namespace Zyb\PhpSocketIo;
 use PHPSocketIO\SocketIO;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
+use Workerman\Http\Client;
 use Workerman\Worker;
 
 class SocketIOService
 {
+    /**
+     * 内部异步回调参数
+     * @var int[]
+     */
+    private $options = [
+        'max_conn_per_addr' => 128, // 每个地址最多维持多少并发连接
+        'keepalive_timeout' => 15,  // 连接多长时间不通讯就关闭
+        'connect_timeout' => 20,  // 连接超时时间
+        'timeout' => 10,  // 等待响应的超时时间
+    ];
+
     /**
      * socket.io配置
      * @var array
@@ -85,6 +97,8 @@ class SocketIOService
     {
         // 创建PHPSocketIO服务
         $this->serviceIO = new SocketIO($this->config['port']);
+        /** @noinspection PhpUndefinedFieldInspection */
+        $this->serviceIO->worker->name = $this->config['name'];
         //白名单过滤
         if (isset($this->config['white_list']) && is_array($this->config['white_list'])) {
             $whiteLists = array_filter($this->config['white_list']);
@@ -155,14 +169,7 @@ class SocketIOService
                     $socket->join($uid);    //主要根据$socket->join($uid)进行消息定点推送
                 }
                 //初始化推送事件消息
-                foreach ($events ?: [] as $event) {
-                    if (!empty($event)) {
-                        $data = $this->httpGet($this->config['callback_url'], ['event' => $event, 'uid' => $socket->uid]);
-                        if (is_array($data)) {
-                            $socket->emit($event, $this->resultToSocketIO(true, $event, $data));
-                        }
-                    }
-                }
+                $this->push($socket, $events);
             });
             // 绑定事件
             $socket->on('bind', function ($events = null) use ($socket) {
@@ -201,19 +208,15 @@ class SocketIOService
                     $socket->join($socket->uid);    //主要根据$socket->join($uid)进行消息定点推送
                 }
                 //初始化推送事件消息
-                foreach ($events ?: [] as $event) {
-                    if (!empty($event)) {
-                        $data = $this->httpGet($this->config['callback_url'], ['event' => $event, 'uid' => $socket->uid]);
-                        if (is_array($data)) {
-                            $socket->emit($event, $this->resultToSocketIO(true, 'bind success', $data));
-                        }
-                    }
-                }
+                $this->push($socket, $events);
             });
             // 解绑事件
             $socket->on('unbind', function ($events = null) use ($socket) {
                 if (!isset($socket->uid)) {
                     return;
+                }
+                if (!is_array($events)) {
+                    $events = [$events];
                 }
                 foreach ($events ?: [] as $event) {
                     $this->unbind($this->eventsMap, $event, $socket->uid);
@@ -301,25 +304,44 @@ class SocketIOService
     }
 
     /**
+     * 初始化推送事件消息
+     * @param $socket
+     * @param $events
+     */
+    private function push($socket, $events): void
+    {
+        //初始化推送事件消息
+        foreach ($events ?: [] as $event) {
+            if (!empty($event)) {
+                $this->asyncPost($this->config['callback_url'], ['event' => $event, 'uid' => $socket->uid], function ($response) use ($socket, $event) {
+                    $data = str_replace([], [], $response->getBody());
+                    if (is_string($data)) {
+                        $data = json_decode($data, true);
+                    }
+                    $socket->emit($event, $this->resultToSocketIO(true, 'bind success', $data));
+                });
+            }
+        }
+    }
+
+    /**
      * 网络请求
      * @param $url
      * @param $params
-     * @return array
+     * @param \Closure|null $callback
+     * @param \Closure|null $error
+     * @return void author ZhengYiBin
      * author ZhengYiBin
      * date   2022-02-23 13:46
      */
-    private function httpGet($url, $params): array
+    private function asyncPost($url, $params, \Closure $callback = null, \Closure $error = null): void
     {
-        $url = "{$url}?" . http_build_query($params);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        $result = curl_exec($ch);
-        curl_close($ch);
-        return json_decode($result, true) ?: [];
+        $http = new Client($this->options);
+        $http->post($url, $params, $callback ?? static function ($response) {
+                echo "------------------------socket bind push success";
+            }, $error ?? static function ($exception) {
+                echo "------------------------socket bind push error";
+            });
     }
 
     /**
