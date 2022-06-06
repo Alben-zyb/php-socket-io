@@ -167,6 +167,10 @@ class SocketIOService
             });
             // 绑定事件
             $socket->on('bind', function ($events = null) use ($socket) {
+                if (empty($socket->uid)) {
+                    $socket->emit('bind', ['success' => false, 'message' => '未登录']);
+                    return;
+                }
                 if (!$events) {
                     return;
                 }
@@ -185,17 +189,12 @@ class SocketIOService
                             'users' => [],
                         ];
                     }
-                    if (!empty($socket->uid)) {
-                        if (!isset($this->eventsMap[$event]['users'][$socket->uid])) {
-                            $this->eventsMap[$event]['users'][$socket->uid] = 0;
-                        }
-                        ++$this->eventsMap[$event]['users'][$socket->uid];
+                    if (!isset($this->eventsMap[$event]['users'][$socket->uid])) {
+                        $this->eventsMap[$event]['users'][$socket->uid] = 0;
                     }
+                    ++$this->eventsMap[$event]['users'][$socket->uid];
                 }
-                if (!empty($socket->uid)) {
-                    $socket->uid = $socket->uid;
-                    $socket->join($socket->uid);    //主要根据$socket->join($uid)进行消息定点推送
-                }
+                $socket->join($socket->uid);    //主要根据$socket->join($uid)进行消息定点推送
                 //初始化推送事件消息
                 $this->push($socket, $events);
             });
