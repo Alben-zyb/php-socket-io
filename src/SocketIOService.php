@@ -122,7 +122,7 @@ class SocketIOService
                 }
                 //已登录，返回
                 if (!empty($socket->uid)) {
-                    $socket->emit('login', ['success' => false, 'message' => '已登录']);
+                    $socket->emit('login', ['success' => true, 'message' => '已登录']);
                     return;
                 }
 
@@ -168,7 +168,7 @@ class SocketIOService
             // 绑定事件
             $socket->on('bind', function ($events = null) use ($socket) {
                 if (empty($socket->uid)) {
-                    $socket->emit('bind', ['success' => false, 'message' => '未登录']);
+                    $socket->emit('bind', ['success' => true, 'message' => '未登录']);
                     return;
                 }
                 if (!$events) {
