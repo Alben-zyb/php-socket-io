@@ -11,10 +11,12 @@ declare(strict_types=1);
 namespace Zyb\PhpSocketIo;
 
 
+use PHPSocketIO\Socket;
 use PHPSocketIO\SocketIO;
 use Workerman\Connection\TcpConnection;
 use Workerman\Protocols\Http\Request;
 use Workerman\Http\Client;
+use Workerman\Protocols\Http\Response;
 use Workerman\Worker;
 
 class SocketIOService
@@ -26,8 +28,8 @@ class SocketIOService
     private $options = [
         'max_conn_per_addr' => 128, // 每个地址最多维持多少并发连接
         'keepalive_timeout' => 15,  // 连接多长时间不通讯就关闭
-        'connect_timeout' => 20,  // 连接超时时间
-        'timeout' => 10,  // 等待响应的超时时间
+        'connect_timeout'   => 20,  // 连接超时时间
+        'timeout'           => 10,  // 等待响应的超时时间
     ];
 
     /**
@@ -54,7 +56,6 @@ class SocketIOService
         //回调事件获取数据地址
         'callback_url' => env('SOCKET_CALLBACK_HOST', 'http://172.22.11.46:8099/todoEvent'),
     ],
-     * */
 
     /**
      * 全局数组保存事件在线数据
@@ -76,6 +77,8 @@ class SocketIOService
         }
     */
 
+    /** @var Response */
+    private $response;
     /**
      * PHPSocketIO服务
      * @var
@@ -85,7 +88,8 @@ class SocketIOService
     public function __construct($config = [])
     {
         //socket.io配置
-        $this->config = $config;
+        $this->response = (new Response())->withHeaders(['Content-Type' => 'application/json']);
+        $this->config   = $config;
         $this->run();
     }
 
@@ -112,7 +116,7 @@ class SocketIOService
             }
         }
         //监听客户端连接事件
-        $this->serviceIO->on('connection', function ($socket) {
+        $this->serviceIO->on('connection', function (Socket $socket) {
             //监听自定义事件
             $socket->on('login', function ($uidEvents = null) use ($socket) {
                 //参数有误，断开连接
@@ -126,11 +130,11 @@ class SocketIOService
                     return;
                 }
 
-                $uid = $uidEvents;
+                $uid    = $uidEvents;
                 $events = [];
                 if (is_array($uidEvents)) {
                     //$uid:非空字符串，$events:非空字符串数组
-                    $uid = $uidEvents[0] ?? '';
+                    $uid    = $uidEvents[0] ?? '';
                     $events = $uidEvents[1] ?? [];
                     //格式验证
                     if (!is_array($events)) {
@@ -146,7 +150,7 @@ class SocketIOService
                     if (!isset($this->eventsMap[$event])) {
                         $this->eventsMap[$event] = [
                             'broadcast' => $this->config['events'][$event] ?? 0,
-                            'users' => [],
+                            'users'     => [],
                         ];
                     }
                     //用户唯一标识（分组、用户组）
@@ -186,7 +190,7 @@ class SocketIOService
                     if (!isset($this->eventsMap[$event])) {
                         $this->eventsMap[$event] = [
                             'broadcast' => $this->config['events'][$event] ?? 0,
-                            'users' => [],
+                            'users'     => [],
                         ];
                     }
                     if (!isset($this->eventsMap[$event]['users'][$socket->uid])) {
@@ -238,11 +242,11 @@ class SocketIOService
                     case 'public':
                         //推送消息
                         //客户端监听的事件
-                        $event = $params['event'] ?? 'new_msg';
-                        $to = $params['to'] ?? null;
+                        $event   = $params['event'] ?? 'new_msg';
+                        $to      = $params['to'] ?? null;
                         $success = (bool)($params['success'] ?? true);
                         $message = $params['message'] ?? '';
-                        $data = json_decode($params['data'] ?? '', true);
+                        $data    = json_decode($params['data'] ?? '', true);
                         //类型控制，$data须为数组
                         if (!is_array($data)) {
                             $data = [];
@@ -353,16 +357,16 @@ class SocketIOService
      * @param bool $success
      * @param string $message
      * @param array $data
-     * @return array
      * author ZhengYiBin
      * date   2022-02-24 10:04
+     * @return array
      */
     private function resultToSocketIO(bool $success, string $message, array $data = []): array
     {
         return [
             'success' => $success,
             'message' => $message,
-            'data' => $data,
+            'data'    => $data,
         ];
     }
 
@@ -371,17 +375,17 @@ class SocketIOService
      * @param bool $success
      * @param string $message
      * @param array $data
-     * @return string
      * author ZhengYiBin
      * date   2022-02-24 10:04
+     * @return Response
      */
-    private function resultToHttp(bool $success, string $message, array $data = []): string
+    private function resultToHttp(bool $success, string $message, array $data = []): Response
     {
-        return json_encode([
+        return $this->response->withBody(json_encode([
             'success' => $success,
             'message' => $message,
-            'data' => $data,
-        ], JSON_UNESCAPED_UNICODE);
+            'data'    => $data,
+        ], JSON_UNESCAPED_UNICODE));
     }
 
 }

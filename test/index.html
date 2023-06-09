@@ -25,7 +25,7 @@
          * data String:uid
          * data Array:[String:uid,String:event/[Array:events]]
          */
-        socket.emit('login', uid);
+        // socket.emit('login', uid);
         socket.emit('login', [uid, 'checkLink']);
         socket.emit('login', [uid, ['checkLink','listen']]);
         // socket.emit('bind', 'checkLink');
