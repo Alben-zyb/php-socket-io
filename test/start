@@ -11,25 +11,30 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Zyb\PhpSocketIo\SocketIOService;
 use Workerman\Worker;
 
-$config = [
+/**
+ * 配置参数
+ */
+$config          = [
     //是否启动
-    'enable' => true,
-    'name' => 'socket_io',
+    'enable'     => true,
+    //服务名称
+    'name'       => 'socket_io',
     //socket.io端口
-    'port' => 2120,
-    //socket.io内部监听地址
+    'port'       => 2120,
+    //socket.io内部监听地址（用于向socket.io服务发送命令）
     'inner_host' => 'http://0.0.0.0:2121',
-
     //白名单
     'white_list' => [
         'http://localhost',
     ],
-    //注册事件
-    'events' => [
-        'todoEvent' => 0,   //0=单播，1=广播
+    //后台注册事件
+    'events'     => [
+        //key:事件名称，value:通讯方式（0=单播，1=广播）
+        'todoEvent' => 0,
+        'news'      => 1,
     ],
-    //回调事件获取数据地址
-    // 'callback_url' => 'http://tms.dasu123.my/admin/statement/exportUrl?type=2',
+    //事件回调地址（用于初次连接时推送数据的数据源地址）
+    // 'callback_url' => 'http://socket_io.my/todoEvent',
 ];
 $socketIOService = new SocketIOService($config);
 Worker::runAll();

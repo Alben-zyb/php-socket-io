@@ -37,25 +37,28 @@ class SocketIOService
      * @var array
      */
     private $config;
-    /*
-     '$config' => [
-        //是否启动
-        'enable' => true,
-        //白名单(选填)
-        'white_list' => [
-            'http://localhost',
-        ],
-        //socket.io端口
-        'port' => env('SOCKET_PORT', 2120),
-        //socket.io内部监听地址
-        'inner_host' => env('SOCKET_INNER_HOST', 'http://0.0.0.0:2121'),
-        //注册事件
-        'events' => [
-            'todoEvent' => 0,   //0=单播，1=广播
-        ],
-        //回调事件获取数据地址
-        'callback_url' => env('SOCKET_CALLBACK_HOST', 'http://172.22.11.46:8099/todoEvent'),
-    ],
+    /**
+     * $config = [
+     * //是否启动
+     * 'enable' => true,
+     * //服务名称
+     * 'name' => 'socket_io',
+     * //socket.io端口
+     * 'port' => 2120,
+     * //socket.io内部监听地址（用于向socket.io服务发送命令）
+     * 'inner_host' => 'http://0.0.0.0:2121',
+     * //白名单
+     * 'white_list' => [
+     * 'http://localhost',
+     * ],
+     * //后台注册事件
+     * 'events' => [
+     * 'todoEvent' => 0,   //key:事件名称，value:通讯方式（0=单播，1=广播）
+     * ],
+     * //事件回调地址（用于初次连接时推送数据的数据源地址）
+     * // 'callback_url' => 'http://socket_io.my/todoEvent',
+     * ];
+     */
 
     /**
      * 全局数组保存事件在线数据
@@ -70,8 +73,8 @@ class SocketIOService
                 broadcast: 0,
                 //连接用户
                 users: {
-                    //userId:连接数（tab页面）
-                    1: 2
+                    //userId:连接数
+                    user1: 2
                 }
             }
         }
@@ -108,7 +111,7 @@ class SocketIOService
             $whiteLists = array_filter($this->config['white_list']);
             if (!empty($whiteLists)) {
                 $list = '';
-                foreach ($whiteLists ?? [] as $whiteList) {
+                foreach ($whiteLists as $whiteList) {
                     $list .= $whiteList . ' ';
                 }
                 //添加白名单
@@ -319,6 +322,7 @@ class SocketIOService
         //初始化推送事件消息
         foreach ($events ?: [] as $event) {
             if (!empty($event) && isset($this->config['callback_url'])) {
+                // 系统回调处理
                 $this->asyncPost($this->config['callback_url'], ['event' => $event, 'uid' => $socket->uid], function ($response) use ($socket, $event) {
                     $data = str_replace([], [], $response->getBody());
                     if (is_string($data)) {
@@ -337,19 +341,18 @@ class SocketIOService
      * @param $url
      * @param $params
      * @param \Closure|null $callback
-     * @param \Closure|null $error
      * @return void author ZhengYiBin
      * author ZhengYiBin
      * date   2022-02-23 13:46
      */
-    private function asyncPost($url, $params, \Closure $callback = null, \Closure $error = null): void
+    private function asyncPost($url, $params, \Closure $callback = null): void
     {
         $http = new Client($this->options);
         $http->post($url, $params, $callback ?? static function ($response) {
                 echo "------------------------socket bind push success";
-            }, $error ?? static function ($exception) {
-                echo "------------------------socket bind push error";
-            });
+            }, static function ($exception) {
+            echo "------------------------socket bind push error";
+        });
     }
 
     /**
